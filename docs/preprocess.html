@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preprocessament - Super-Resolució MRI</title>
+    <style>
+        :root {
+            --bg: #1a1a2e;
+            --surface: #16213e;
+            --primary: #0f3460;
+            --accent: #e94560;
+            --text: #eaeaea;
+            --text-muted: #a0a0b0;
+            --code-bg: #0d1b2a;
+            --success: #4ecdc4;
+            --warning: #f39c12;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), #ff6b8a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--success);
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 0.5rem;
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--primary);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .pipeline-step {
+            background: var(--primary);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 0.8rem 1.2rem;
+            text-align: center;
+            font-size: 0.9rem;
+            min-width: 120px;
+        }
+
+        .pipeline-step .label {
+            font-weight: bold;
+            color: var(--text);
+            display: block;
+        }
+
+        .pipeline-step .detail {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .arrow {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        code {
+            background: var(--code-bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: var(--success);
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--primary);
+            border-radius: 8px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .stat {
+            background: var(--primary);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat .number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .stat .desc {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.7rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--primary);
+        }
+
+        th {
+            background: var(--primary);
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-muted);
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--primary);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-right: 0.3rem;
+        }
+
+        .function-block {
+            border-left: 3px solid var(--accent);
+            padding-left: 1rem;
+            margin: 1rem 0;
+        }
+
+        .function-block .fname {
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .function-block .fdesc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .tree {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.8;
+            color: var(--text-muted);
+        }
+
+        .tree .folder {
+            color: var(--success);
+        }
+
+        .tree .file {
+            color: var(--text-muted);
+        }
+
+        .config-table td:first-child {
+            color: var(--success);
+            font-family: monospace;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Preprocessament MRI</h1>
+        <p class="subtitle">Script de preparació de dades per al projecte de Super-Resolució amb imatges de ressonància magnètica (OASIS dataset)</p>
+
+        <h2>1. Objectiu</h2>
+        <div class="card">
+            <p>L'script <code>scripts/preprocess.py</code> converteix volums 3D de ressonància magnètica (format Analyze .hdr/.img) en parelles d'imatges 2D PNG per entrenar un model de super-resolució:</p>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin: 0.5rem 0; color: var(--text-muted);">→ <strong style="color: var(--text);">HR (High Resolution):</strong> Imatges 256×256 px — Ground Truth</li>
+                <li style="margin: 0.5rem 0; color: var(--text-muted);">→ <strong style="color: var(--text);">LR (Low Resolution):</strong> Imatges 64×64 px — Entrada del model (4× reducció bicúbica)</li>
+            </ul>
+        </div>
+
+        <h2>2. Pipeline</h2>
+        <div class="pipeline">
+            <div class="pipeline-step">
+                <span class="label">Volum 3D</span>
+                <span class="detail">.hdr/.img (176×208×176)</span>
+            </div>
+            <span class="arrow">→</span>
+            <div class="pipeline-step">
+                <span class="label">Extracció Slices</span>
+                <span class="detail">Axial (eix Z)</span>
+            </div>
+            <span class="arrow">→</span>
+            <div class="pipeline-step">
+                <span class="label">Filtratge</span>
+                <span class="detail">&gt;1% píxels cervell</span>
+            </div>
+            <span class="arrow">→</span>
+            <div class="pipeline-step">
+                <span class="label">Normalització</span>
+                <span class="detail">0-255 uint8</span>
+            </div>
+            <span class="arrow">→</span>
+            <div class="pipeline-step">
+                <span class="label">HR (256²)</span>
+                <span class="detail">Resize bicúbic</span>
+            </div>
+            <span class="arrow">→</span>
+            <div class="pipeline-step">
+                <span class="label">LR (64²)</span>
+                <span class="detail">Downsample 4×</span>
+            </div>
+        </div>
+
+        <h2>3. Dades d'entrada</h2>
+        <div class="card">
+            <h3>Dataset OASIS (disc1/)</h3>
+            <p>Utilitzem els volums processats en espai Talairach amb màscara cranial i correcció de biaix:</p>
+            <pre><code>disc1/OAS1_XXXX_MR1/PROCESSED/MPRAGE/T88_111/*_masked_gfc.hdr/.img</code></pre>
+            <p>Característiques dels volums:</p>
+            <table>
+                <tr><th>Propietat</th><th>Valor</th></tr>
+                <tr><td>Format</td><td>Analyze 7.5 (.hdr + .img)</td></tr>
+                <tr><td>Dimensions</td><td>176 × 208 × 176 vòxels</td></tr>
+                <tr><td>Espai</td><td>Talairach (T88) — estandarditzat entre subjectes</td></tr>
+                <tr><td>Preprocessat</td><td>Skull-stripped (masked) + Bias-field corrected (gfc)</td></tr>
+                <tr><td>Subjectes</td><td>39</td></tr>
+            </table>
+        </div>
+
+        <h2>4. Funcions de l'script</h2>
+        <div class="card">
+            <div class="function-block">
+                <div class="fname">load_volume(hdr_path)</div>
+                <div class="fdesc">Carrega un volum Analyze amb nibabel i elimina dimensions extres (squeeze).</div>
+            </div>
+            <div class="function-block">
+                <div class="fname">normalize_slice(slice_2d)</div>
+                <div class="fdesc">Normalitza min-max un tall 2D a rang [0, 255] com a uint8.</div>
+            </div>
+            <div class="function-block">
+                <div class="fname">is_valid_slice(slice_2d, threshold)</div>
+                <div class="fdesc">Comprova que el tall tingui més d'un 1% de píxels no-zero (descarta talls buits o amb poc cervell).</div>
+            </div>
+            <div class="function-block">
+                <div class="fname">extract_slices(volume)</div>
+                <div class="fdesc">Itera per l'eix axial del volum i retorna tots els talls vàlids normalitzats.</div>
+            </div>
+            <div class="function-block">
+                <div class="fname">create_hr_lr_pair(slice_2d)</div>
+                <div class="fdesc">Redimensiona el tall a 256×256 (HR) i després el redueix a 64×64 (LR) amb interpolació bicúbica.</div>
+            </div>
+            <div class="function-block">
+                <div class="fname">main()</div>
+                <div class="fdesc">Orquestra tot el procés: descobreix subjectes, extreu talls, genera parelles HR/LR, barreja, divideix i guarda.</div>
+            </div>
+        </div>
+
+        <h2>5. Configuració</h2>
+        <div class="card">
+            <table class="config-table">
+                <tr><th>Paràmetre</th><th>Valor</th><th>Descripció</th></tr>
+                <tr><td>DATA_DIR</td><td>disc1/</td><td>Directori amb els subjectes OASIS</td></tr>
+                <tr><td>OUTPUT_DIR</td><td>data/</td><td>Directori de sortida</td></tr>
+                <tr><td>HR_SIZE</td><td>256</td><td>Resolució de les imatges HR</td></tr>
+                <tr><td>LR_SIZE</td><td>64</td><td>Resolució de les imatges LR (4× reducció)</td></tr>
+                <tr><td>SLICE_AXIS</td><td>2 (axial)</td><td>Eix de tall: 0=sagital, 1=coronal, 2=axial</td></tr>
+                <tr><td>BRAIN_THRESHOLD</td><td>0.01</td><td>Mínim 1% píxels no-zero per acceptar un tall</td></tr>
+                <tr><td>TRAIN_RATIO</td><td>0.80</td><td>80% entrenament</td></tr>
+                <tr><td>VAL_RATIO</td><td>0.10</td><td>10% validació</td></tr>
+                <tr><td>TEST_RATIO</td><td>0.10</td><td>10% test</td></tr>
+                <tr><td>SEED</td><td>42</td><td>Llavor aleatòria per reproduïbilitat</td></tr>
+            </table>
+        </div>
+
+        <h2>6. Resultats</h2>
+        <div class="grid">
+            <div class="stat">
+                <div class="number">5,577</div>
+                <div class="desc">Talls totals extrets</div>
+            </div>
+            <div class="stat">
+                <div class="number">4,461</div>
+                <div class="desc">Imatges d'entrenament</div>
+            </div>
+            <div class="stat">
+                <div class="number">557</div>
+                <div class="desc">Imatges de validació</div>
+            </div>
+            <div class="stat">
+                <div class="number">559</div>
+                <div class="desc">Imatges de test</div>
+            </div>
+        </div>
+
+        <h3>Estructura de sortida</h3>
+        <div class="card">
+            <div class="tree">
+                <span class="folder">data/</span><br>
+                ├── <span class="folder">train/</span><br>
+                │   ├── <span class="folder">HR/</span> &nbsp;&nbsp;← 256×256 PNG (Ground Truth)<br>
+                │   └── <span class="folder">LR/</span> &nbsp;&nbsp;← 64×64 PNG (Input del model)<br>
+                ├── <span class="folder">val/</span><br>
+                │   ├── <span class="folder">HR/</span><br>
+                │   └── <span class="folder">LR/</span><br>
+                └── <span class="folder">test/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;├── <span class="folder">HR/</span><br>
+                &nbsp;&nbsp;&nbsp;&nbsp;└── <span class="folder">LR/</span>
+            </div>
+        </div>
+
+        <h2>7. Execució</h2>
+        <div class="card">
+            <pre><code># Des del directori arrel del projecte
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python scripts/preprocess.py</code></pre>
+        </div>
+
+        <h2>8. Estructura del projecte</h2>
+        <div class="card">
+            <div class="tree">
+                <span class="folder">Projecte/</span><br>
+                ├── <span class="folder">disc1/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Dataset OASIS original<br>
+                ├── <span class="folder">data/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Dades processades (HR/LR splits)<br>
+                ├── <span class="folder">scripts/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Scripts del projecte<br>
+                │   └── <span class="file">preprocess.py</span><br>
+                ├── <span class="folder">docs/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Documentació<br>
+                │   └── <span class="file">preprocess.html</span><br>
+                ├── <span class="file">requirements.txt</span><br>
+                └── <span class="folder">venv/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Entorn virtual Python<br>
+            </div>
+        </div>
+
+        <h2>9. Decisions de disseny</h2>
+        <div class="card">
+            <h3>Per què volums T88_masked_gfc?</h3>
+            <p>Aquests volums ja estan: (1) registrats a un espai comú (Talairach), el que garanteix consistència entre subjectes; (2) amb el crani eliminat, de manera que el model se centra en teixit cerebral; (3) amb correcció de camp de biaix (inhomogeneïtat del camp magnètic).</p>
+
+            <h3>Per què talls axials?</h3>
+            <p>Els talls axials (transversals) mostren la millor secció del cervell amb ambdós hemisferis visibles, i són els més usats en neuroimatge clínica.</p>
+
+            <h3>Per què normalització per tall?</h3>
+            <p>Cada tall es normalitza individualment a [0, 255] per maximitzar el contrast local i evitar que talls amb menys senyal quedin foscos.</p>
+
+            <h3>Per què barrejar abans de dividir?</h3>
+            <p>Barregem tots els talls (de tots els subjectes) i després dividim. Això assegura que cada split conté talls de múltiples subjectes, millorant la generalització del model.</p>
+        </div>
+    </div>
+</body>
+</html>
