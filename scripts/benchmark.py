@@ -1,0 +1,154 @@
+"""
+Benchmark script for MRI Super-Resolution.
+Runs Swin2SR and Real-ESRGAN inference on test LR images,
+saves super-resolved outputs and timing data.
+"""
+
+import time
+import json
+import torch
+import numpy as np
+from PIL import Image
+from pathlib import Path
+
+# Configuration
+TEST_LR_DIR = Path("data/test/LR")
+RESULTS_DIR = Path("results")
+DEVICE = torch.device("mps" if torch.backends.mps.is_available() else
+                      "cuda" if torch.cuda.is_available() else "cpu")
+
+
+def run_swin2sr(lr_dir, output_dir):
+    """Run Swin2SR-classical-sr-x4-64 on all test images."""
+    from transformers import AutoImageProcessor, Swin2SRForImageSuperResolution
+
+    print(f"Loading Swin2SR model on {DEVICE}...")
+    processor = AutoImageProcessor.from_pretrained("caidas/swin2SR-classical-sr-x4-64")
+    model = Swin2SRForImageSuperResolution.from_pretrained("caidas/swin2SR-classical-sr-x4-64")
+    model = model.to(DEVICE)
+    model.eval()
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timings = []
+    lr_images = sorted(lr_dir.glob("*.png"))
+
+    print(f"Running Swin2SR on {len(lr_images)} images...")
+    for i, img_path in enumerate(lr_images):
+        # Load grayscale and convert to RGB (model expects 3 channels)
+        img = Image.open(img_path).convert("RGB")
+
+        # Preprocess
+        inputs = processor(img, return_tensors="pt").to(DEVICE)
+
+        # Inference with timing
+        start = time.time()
+        with torch.no_grad():
+            outputs = model(**inputs)
+        elapsed = time.time() - start
+        timings.append(elapsed)
+
+        # Postprocess
+        output = outputs.reconstruction.squeeze().cpu().numpy()
+        output = np.clip(output * 255.0, 0, 255).astype(np.uint8)
+
+        # output shape: (3, H, W) → take mean across channels for grayscale
+        if output.ndim == 3:
+            output = np.transpose(output, (1, 2, 0))  # (H, W, 3)
+            output = np.mean(output, axis=2).astype(np.uint8)
+
+        sr_img = Image.fromarray(output, mode="L")
+
+        # Ensure output is 256x256
+        if sr_img.size != (256, 256):
+            sr_img = sr_img.resize((256, 256), Image.BICUBIC)
+
+        sr_img.save(output_dir / img_path.name)
+
+        if (i + 1) % 50 == 0:
+            print(f"  [{i+1}/{len(lr_images)}] avg time: {np.mean(timings):.4f}s")
+
+    return timings
+
+
+def run_real_esrgan(lr_dir, output_dir):
+    """Run Real-ESRGAN x4 on all test images."""
+    from RealESRGAN import RealESRGAN
+
+    print(f"Loading Real-ESRGAN model on {DEVICE}...")
+    model = RealESRGAN(DEVICE, scale=4)
+    model.load_weights("weights/RealESRGAN_x4.pth", download=True)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timings = []
+    lr_images = sorted(lr_dir.glob("*.png"))
+
+    print(f"Running Real-ESRGAN on {len(lr_images)} images...")
+    for i, img_path in enumerate(lr_images):
+        # Load as RGB (required by Real-ESRGAN)
+        img = Image.open(img_path).convert("RGB")
+
+        # Inference with timing
+        start = time.time()
+        sr_image = model.predict(img)
+        elapsed = time.time() - start
+        timings.append(elapsed)
+
+        # Convert back to grayscale
+        sr_image = sr_image.convert("L")
+
+        # Ensure output is 256x256
+        if sr_image.size != (256, 256):
+            sr_image = sr_image.resize((256, 256), Image.BICUBIC)
+
+        sr_image.save(output_dir / img_path.name)
+
+        if (i + 1) % 50 == 0:
+            print(f"  [{i+1}/{len(lr_images)}] avg time: {np.mean(timings):.4f}s")
+
+    return timings
+
+
+def main():
+    print(f"Device: {DEVICE}")
+    print(f"Test images: {TEST_LR_DIR}")
+    print()
+
+    # Run Swin2SR
+    swin2sr_dir = RESULTS_DIR / "swin2sr"
+    swin2sr_timings = run_swin2sr(TEST_LR_DIR, swin2sr_dir)
+    print(f"\nSwin2SR done: {len(swin2sr_timings)} images, "
+          f"avg {np.mean(swin2sr_timings):.4f}s/image\n")
+
+    # Run Real-ESRGAN
+    esrgan_dir = RESULTS_DIR / "real_esrgan"
+    esrgan_timings = run_real_esrgan(TEST_LR_DIR, esrgan_dir)
+    print(f"\nReal-ESRGAN done: {len(esrgan_timings)} images, "
+          f"avg {np.mean(esrgan_timings):.4f}s/image\n")
+
+    # Save timings
+    timings_data = {
+        "device": str(DEVICE),
+        "n_images": len(swin2sr_timings),
+        "swin2sr": {
+            "mean": float(np.mean(swin2sr_timings)),
+            "std": float(np.std(swin2sr_timings)),
+            "total": float(np.sum(swin2sr_timings)),
+            "per_image": swin2sr_timings,
+        },
+        "real_esrgan": {
+            "mean": float(np.mean(esrgan_timings)),
+            "std": float(np.std(esrgan_timings)),
+            "total": float(np.sum(esrgan_timings)),
+            "per_image": esrgan_timings,
+        },
+    }
+
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+    with open(RESULTS_DIR / "timings.json", "w") as f:
+        json.dump(timings_data, f, indent=2)
+
+    print("Timings saved to results/timings.json")
+
+
+if __name__ == "__main__":
+    main()

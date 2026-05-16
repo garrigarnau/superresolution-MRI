@@ -4,3 +4,6 @@ pillow>=9.0
 torch>=2.0
 torchvision>=0.15
 matplotlib>=3.7
+transformers>=4.30
+scikit-image>=0.21
+real-esrgan @ git+https://github.com/ai-forever/Real-ESRGAN.git
