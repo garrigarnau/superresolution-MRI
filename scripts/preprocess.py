@@ -15,7 +15,7 @@ import random
 DATA_DIR = Path("disc1")
 OUTPUT_DIR = Path("data")
 HR_SIZE = 256
-LR_SIZE = 64  # 4x downscale
+LR_SIZE = 128  # 2x downscale
 SLICE_AXIS = 2  # 0=sagittal, 1=coronal, 2=axial
 BRAIN_THRESHOLD = 0.01  # minimum fraction of non-zero pixels to keep a slice
 TRAIN_RATIO = 0.80
