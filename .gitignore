@@ -1,8 +1,20 @@
-disc1
-
+# Dataset original (descarregar manualment)
+disc1/
 oasis_cross-sectional_disc1.tar.gz
 
+# Entorn virtual
+venv/
 
-venv
+# Dades generades (reproduir amb: python scripts/preprocess.py)
+data/
 
-data
+# Resultats generats (reproduir amb: python scripts/benchmark.py + evaluate.py)
+results/
+
+# Pesos dels models (es descarreguen automaticament)
+weights/
+
+# Sistema
+.DS_Store
+__pycache__/
+*.pyc
