@@ -4,237 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fase 1: Benchmarking - Super-Resolució MRI</title>
-    <style>
-        :root {
-            --bg: #1a1a2e;
-            --surface: #16213e;
-            --primary: #0f3460;
-            --accent: #e94560;
-            --text: #eaeaea;
-            --text-muted: #a0a0b0;
-            --code-bg: #0d1b2a;
-            --success: #4ecdc4;
-            --warning: #f39c12;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            padding: 2rem;
-        }
-
-        .container { max-width: 1000px; margin: 0 auto; }
-
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--accent), #ff6b8a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--success);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 0.5rem;
-        }
-
-        h3 {
-            font-size: 1.1rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-        }
-
-        p { margin-bottom: 1rem; color: var(--text-muted); }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        code {
-            background: var(--code-bg);
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            color: var(--success);
-        }
-
-        pre {
-            background: var(--code-bg);
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            padding: 1.2rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        pre code { background: none; padding: 0; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-
-        th, td {
-            padding: 0.7rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--primary);
-        }
-
-        th {
-            background: var(--primary);
-            color: var(--success);
-            font-weight: 600;
-        }
-
-        td { color: var(--text-muted); }
-
-        .model-card {
-            background: var(--surface);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .model-card h3 {
-            margin-top: 0;
-            color: var(--accent);
-        }
-
-        .model-card .tag {
-            display: inline-block;
-            background: var(--primary);
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            margin-right: 0.3rem;
-        }
-
-        .pipeline {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin: 2rem 0;
-        }
-
-        .pipeline-step {
-            background: var(--primary);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            padding: 0.8rem 1.2rem;
-            text-align: center;
-            font-size: 0.9rem;
-            min-width: 130px;
-        }
-
-        .pipeline-step .label {
-            font-weight: bold;
-            color: var(--text);
-            display: block;
-        }
-
-        .pipeline-step .detail {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .arrow {
-            color: var(--accent);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-        .metric-card {
-            background: var(--primary);
-            border-radius: 8px;
-            padding: 1.2rem;
-        }
-
-        .metric-card h4 {
-            color: var(--success);
-            margin-bottom: 0.5rem;
-        }
-
-        .metric-card p {
-            font-size: 0.9rem;
-            margin-bottom: 0;
-        }
-
-        .tree {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.8;
-            color: var(--text-muted);
-        }
-
-        .tree .folder { color: var(--success); }
-        .tree .file { color: var(--text-muted); }
-
-        .function-block {
-            border-left: 3px solid var(--accent);
-            padding-left: 1rem;
-            margin: 1rem 0;
-        }
-
-        .function-block .fname {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--success);
-            font-weight: bold;
-        }
-
-        .function-block .fdesc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .note {
-            background: var(--code-bg);
-            border-left: 4px solid var(--warning);
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .note strong { color: var(--warning); }
-    </style>
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body class="benchmark-doc">
     <div class="container">
         <h1>Fase 1: Benchmarking</h1>
         <p class="subtitle">Avaluació de models pre-entrenats de super-resolució sobre imatges MRI sense fine-tuning</p>
@@ -353,7 +125,7 @@
                 <div class="fdesc">Itera sobre totes les parelles HR/SR, calcula PSNR i SSIM amb scikit-image, i retorna les mitjanes i desviacions estàndard.</div>
             </div>
             <div class="function-block">
-                <div class="fname">generate_visual_comparison(hr_dir, models, output_path)</div>
+                <div class="fname">generate_visual_comparison(hr_dir, lr_dir, models, output_path)</div>
                 <div class="fdesc">Genera una imatge grid amb 5 mostres: LR (nearest-neighbor upscaled), HR ground truth, i les sortides de cada model. Permet avaluació visual ràpida.</div>
             </div>
         </div>
@@ -396,16 +168,16 @@ python scripts/evaluate.py</code></pre>
                     <td><strong style="color: var(--text);">Swin2SR</strong></td>
                     <td>15.40 +/- 3.56</td>
                     <td>0.6574 +/- 0.1689</td>
-                    <td>0.3742</td>
+                    <td>0.1037 +/- 0.0287</td>
                 </tr>
                 <tr>
                     <td><strong style="color: var(--text);">Real-ESRGAN</strong></td>
                     <td>23.66 +/- 4.48</td>
                     <td>0.8463 +/- 0.0793</td>
-                    <td>4.2789</td>
+                    <td>0.6192 +/- 0.0163</td>
                 </tr>
             </table>
-            <p style="margin-top: 1rem; font-size: 0.85rem;">Dispositiu: Apple MPS (Metal Performance Shaders) · 559 imatges de test · Resolució LR: 64×64 → SR: 256×256</p>
+            <p style="margin-top: 1rem; font-size: 0.85rem;">Última execució: 18/05/2026 · Dispositiu: CUDA · 559 imatges de test · Resolució LR: 64×64 → SR: 256×256</p>
         </div>
 
         <h3>Anàlisi dels Resultats</h3>
@@ -417,7 +189,7 @@ python scripts/evaluate.py</code></pre>
             <p>El PSNR molt baix (15.40 dB) indica que el model altera significativament els valors d'intensitat. Produeix imatges rentades ("washed-out") amb pèrdua de contrast. El model d'atenció, entrenat en imatges naturals, no s'adapta bé al domini mèdic sense fine-tuning.</p>
 
             <h3>Velocitat</h3>
-            <p>Swin2SR és <strong style="color: var(--text);">11.4× més ràpid</strong> que Real-ESRGAN (0.37s vs 4.28s per imatge). Real-ESRGAN processa per patches amb overlap, el que és més costós computacionalment.</p>
+            <p>Swin2SR és <strong style="color: var(--text);">6.0× més ràpid</strong> que Real-ESRGAN (0.1037s vs 0.6192s per imatge). Real-ESRGAN processa per patches amb overlap, el que és més costós computacionalment.</p>
         </div>
 
         <h3>Avaluació Visual</h3>
@@ -446,8 +218,8 @@ python scripts/evaluate.py</code></pre>
                 </tr>
                 <tr>
                     <td>Velocitat</td>
-                    <td style="color: var(--success);">Ràpid (0.37 s/img)</td>
-                    <td>Lent (4.28 s/img)</td>
+                    <td style="color: var(--success);">Ràpid (0.1037 s/img)</td>
+                    <td>Lent (0.6192 s/img)</td>
                 </tr>
             </table>
         </div>

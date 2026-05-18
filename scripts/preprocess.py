@@ -4,24 +4,22 @@ Converts 3D Analyze (.hdr/.img) volumes to 2D PNG slices,
 generates HR/LR pairs, and splits into train/val/test.
 """
 
-import os
 import numpy as np
 import nibabel as nib
 from PIL import Image
-from pathlib import Path
 import random
 
-# Configuration
-DATA_DIR = Path("disc1")
-OUTPUT_DIR = Path("data")
-HR_SIZE = 256
-LR_SIZE = 64  # 4x downscale
-SLICE_AXIS = 2  # 0=sagittal, 1=coronal, 2=axial
-BRAIN_THRESHOLD = 0.01  # minimum fraction of non-zero pixels to keep a slice
-TRAIN_RATIO = 0.80
-VAL_RATIO = 0.10
-TEST_RATIO = 0.10
-SEED = 42
+from config import (
+    BRAIN_THRESHOLD,
+    DATA_DIR,
+    HR_SIZE,
+    LR_SIZE,
+    OUTPUT_DIR,
+    SEED,
+    SLICE_AXIS,
+    TRAIN_RATIO,
+    VAL_RATIO,
+)
 
 
 def load_volume(hdr_path):

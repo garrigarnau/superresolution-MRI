@@ -6,17 +6,10 @@ Computes PSNR, SSIM metrics and generates visual comparisons.
 import json
 import numpy as np
 from PIL import Image
-from pathlib import Path
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
 
-# Configuration
-TEST_HR_DIR = Path("data/test/HR")
-RESULTS_DIR = Path("results")
-MODELS = {
-    "swin2sr": RESULTS_DIR / "swin2sr",
-    "real_esrgan": RESULTS_DIR / "real_esrgan",
-}
+from config import MODELS, RESULTS_DIR, TEST_HR_DIR, TEST_LR_DIR
 
 
 def compute_metrics(hr_dir, sr_dir):
@@ -55,7 +48,7 @@ def compute_metrics(hr_dir, sr_dir):
     }
 
 
-def generate_visual_comparison(hr_dir, models, output_path, n_samples=5):
+def generate_visual_comparison(hr_dir, lr_dir, models, output_path, n_samples=5):
     """Generate a visual comparison grid of sample images."""
     hr_images = sorted(hr_dir.glob("*.png"))
 
@@ -86,7 +79,7 @@ def generate_visual_comparison(hr_dir, models, output_path, n_samples=5):
         y = header_height + padding + row * (cell_size + padding)
 
         # LR image (upscaled for display)
-        lr_path = Path("data/test/LR") / hr_path.name
+        lr_path = lr_dir / hr_path.name
         if lr_path.exists():
             lr_img = Image.open(lr_path).convert("L").resize((cell_size, cell_size), Image.NEAREST)
             grid.paste(lr_img, (padding, y))
@@ -160,7 +153,7 @@ def main():
 
     # Generate visual comparison
     generate_visual_comparison(
-        TEST_HR_DIR, MODELS,
+        TEST_HR_DIR, TEST_LR_DIR, MODELS,
         RESULTS_DIR / "visual_comparison.png",
         n_samples=5
     )

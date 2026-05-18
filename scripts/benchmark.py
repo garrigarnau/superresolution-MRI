@@ -10,11 +10,14 @@ import argparse
 import torch
 import numpy as np
 from PIL import Image
-from pathlib import Path
 
-# Configuration
-TEST_LR_DIR = Path("data/test/LR")
-RESULTS_DIR = Path("results")
+from config import (
+    REAL_ESRGAN_RESULTS_DIR,
+    REAL_ESRGAN_WEIGHTS_PATH,
+    RESULTS_DIR,
+    SWIN2SR_RESULTS_DIR,
+    TEST_LR_DIR,
+)
 
 
 def resolve_device(device_name):
@@ -98,7 +101,7 @@ def run_real_esrgan(lr_dir, output_dir, device):
 
     print(f"Loading Real-ESRGAN model on {device}...")
     model = RealESRGAN(device, scale=4)
-    model.load_weights("weights/RealESRGAN_x4.pth", download=True)
+    model.load_weights(REAL_ESRGAN_WEIGHTS_PATH.as_posix(), download=True)
     predict = model.predict
     if device.type == "cuda" and hasattr(model.predict, "__wrapped__"):
         # The ai-forever package decorates predict() with CUDA autocast.
@@ -151,14 +154,12 @@ def main():
     print()
 
     # Run Swin2SR
-    swin2sr_dir = RESULTS_DIR / "swin2sr"
-    swin2sr_timings = run_swin2sr(TEST_LR_DIR, swin2sr_dir, device)
+    swin2sr_timings = run_swin2sr(TEST_LR_DIR, SWIN2SR_RESULTS_DIR, device)
     print(f"\nSwin2SR done: {len(swin2sr_timings)} images, "
           f"avg {np.mean(swin2sr_timings):.4f}s/image\n")
 
     # Run Real-ESRGAN
-    esrgan_dir = RESULTS_DIR / "real_esrgan"
-    esrgan_timings = run_real_esrgan(TEST_LR_DIR, esrgan_dir, device)
+    esrgan_timings = run_real_esrgan(TEST_LR_DIR, REAL_ESRGAN_RESULTS_DIR, device)
     print(f"\nReal-ESRGAN done: {len(esrgan_timings)} images, "
           f"avg {np.mean(esrgan_timings):.4f}s/image\n")
 

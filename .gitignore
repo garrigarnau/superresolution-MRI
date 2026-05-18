@@ -4,6 +4,7 @@ oasis_cross-sectional_disc1.tar.gz
 
 # Entorn virtual
 venv/
+.venv/
 
 # Dades generades (reproduir amb: python scripts/preprocess.py)
 data/

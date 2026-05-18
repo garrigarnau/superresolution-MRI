@@ -4,242 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Preprocessament - Super-Resolució MRI</title>
-    <style>
-        :root {
-            --bg: #1a1a2e;
-            --surface: #16213e;
-            --primary: #0f3460;
-            --accent: #e94560;
-            --text: #eaeaea;
-            --text-muted: #a0a0b0;
-            --code-bg: #0d1b2a;
-            --success: #4ecdc4;
-            --warning: #f39c12;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.7;
-            padding: 2rem;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        h1 {
-            font-size: 2.2rem;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, var(--accent), #ff6b8a);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        h2 {
-            font-size: 1.5rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--success);
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 0.5rem;
-        }
-
-        h3 {
-            font-size: 1.1rem;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--accent);
-        }
-
-        p {
-            margin-bottom: 1rem;
-            color: var(--text-muted);
-        }
-
-        .subtitle {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            margin-bottom: 2rem;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--primary);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .pipeline {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin: 2rem 0;
-        }
-
-        .pipeline-step {
-            background: var(--primary);
-            border: 1px solid var(--accent);
-            border-radius: 8px;
-            padding: 0.8rem 1.2rem;
-            text-align: center;
-            font-size: 0.9rem;
-            min-width: 120px;
-        }
-
-        .pipeline-step .label {
-            font-weight: bold;
-            color: var(--text);
-            display: block;
-        }
-
-        .pipeline-step .detail {
-            color: var(--text-muted);
-            font-size: 0.8rem;
-        }
-
-        .arrow {
-            color: var(--accent);
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        code {
-            background: var(--code-bg);
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.9rem;
-            color: var(--success);
-        }
-
-        pre {
-            background: var(--code-bg);
-            border: 1px solid var(--primary);
-            border-radius: 8px;
-            padding: 1.2rem;
-            overflow-x: auto;
-            margin: 1rem 0;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.85rem;
-            line-height: 1.5;
-        }
-
-        pre code {
-            background: none;
-            padding: 0;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1rem;
-            margin: 1rem 0;
-        }
-
-        .stat {
-            background: var(--primary);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-
-        .stat .number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
-        .stat .desc {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-
-        th, td {
-            padding: 0.7rem 1rem;
-            text-align: left;
-            border-bottom: 1px solid var(--primary);
-        }
-
-        th {
-            background: var(--primary);
-            color: var(--success);
-            font-weight: 600;
-        }
-
-        td {
-            color: var(--text-muted);
-        }
-
-        .tag {
-            display: inline-block;
-            background: var(--primary);
-            border: 1px solid var(--accent);
-            color: var(--accent);
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            margin-right: 0.3rem;
-        }
-
-        .function-block {
-            border-left: 3px solid var(--accent);
-            padding-left: 1rem;
-            margin: 1rem 0;
-        }
-
-        .function-block .fname {
-            font-family: 'JetBrains Mono', monospace;
-            color: var(--success);
-            font-weight: bold;
-        }
-
-        .function-block .fdesc {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-        }
-
-        .tree {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            line-height: 1.8;
-            color: var(--text-muted);
-        }
-
-        .tree .folder {
-            color: var(--success);
-        }
-
-        .tree .file {
-            color: var(--text-muted);
-        }
-
-        .config-table td:first-child {
-            color: var(--success);
-            font-family: monospace;
-            white-space: nowrap;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body>
+<body class="preprocess-doc">
     <div class="container">
         <h1>Preprocessament MRI</h1>
         <p class="subtitle">Script de preparació de dades per al projecte de Super-Resolució amb imatges de ressonància magnètica (OASIS dataset)</p>
@@ -348,6 +115,7 @@
         </div>
 
         <h2>6. Resultats</h2>
+        <p>Última execució: 18/05/2026 · 39 subjectes processats · 5,577 talls totals extrets.</p>
         <div class="grid">
             <div class="stat">
                 <div class="number">5,577</div>
@@ -399,8 +167,11 @@ python scripts/preprocess.py</code></pre>
                 ├── <span class="folder">disc1/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Dataset OASIS original<br>
                 ├── <span class="folder">data/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Dades processades (HR/LR splits)<br>
                 ├── <span class="folder">scripts/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Scripts del projecte<br>
+                │   ├── <span class="file">config.py</span><br>
                 │   └── <span class="file">preprocess.py</span><br>
                 ├── <span class="folder">docs/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Documentació<br>
+                │   ├── <span class="folder">assets/</span><br>
+                │   │   └── <span class="file">styles.css</span><br>
                 │   └── <span class="file">preprocess.html</span><br>
                 ├── <span class="file">requirements.txt</span><br>
                 └── <span class="folder">venv/</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Entorn virtual Python<br>
