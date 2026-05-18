@@ -198,28 +198,33 @@ python scripts/evaluate.py</code></pre>
                 <tr><th>Aspecte</th><th>Swin2SR (Transformer)</th><th>Real-ESRGAN (GAN)</th></tr>
                 <tr>
                     <td>Intensitats</td>
-                    <td style="color: var(--accent);">Imatges rentades, pèrdua severa de contrast — inversió de valors en algunes regions</td>
-                    <td>Manté el rang d'intensitats original adequadament</td>
+                    <td style="color: var(--accent);">Contrast reduït; imatge més suavitzada i amb pèrdua d’intensitats locals</td>
+                    <td>Contrast exagerat; pot alterar la distribució d’intensitats respecte de la HR</td>
                 </tr>
                 <tr>
                     <td>Textures</td>
-                    <td>Borroses i sense detall</td>
-                    <td style="color: var(--accent);">Over-sharpening artificial — crea vores massa marcades i textures "cartoonesques"</td>
+                    <td>Textures borroses i pèrdua de detall fi</td>
+                    <td style="color: var(--accent);">Over-sharpening artificial; genera textures poc realistes</td>
                 </tr>
                 <tr>
                     <td>Estructures cerebrals</td>
-                    <td>Difícils de distingir pel baix contrast</td>
-                    <td>Visibles però amb artefactes a les zones de transició (substància gris/blanca)</td>
+                    <td>Manté la forma global, però les vores grisa/blanca són poc definides</td>
+                    <td>Estructures més visibles, però amb vores artificials i artefactes de transició</td>
                 </tr>
                 <tr>
                     <td>Fons (àrees negres)</td>
-                    <td style="color: var(--accent);">Introdueix soroll i brillantor on hauria de ser negre</td>
-                    <td>Manté el fons net</td>
+                    <td style="color: var(--accent);">Fons majoritàriament net</td>
+                    <td>Fons net, però amb artefactes marcats prop de les vores cerebrals</td>
                 </tr>
                 <tr>
                     <td>Velocitat</td>
                     <td style="color: var(--success);">Ràpid (0.1037 s/img)</td>
                     <td>Lent (0.6192 s/img)</td>
+                </tr>
+                <tr>
+                    <td>Valoració global</td>
+                    <td>Més conservador però massa suau; millor candidat per fine-tuning</td>
+                    <td>Visualment nítid però menys fiable mèdicament pel risc d’artefactes</td>
                 </tr>
             </table>
         </div>
