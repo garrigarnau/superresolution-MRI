@@ -8,8 +8,18 @@ import numpy as np
 from PIL import Image
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-
 from config import MODELS, RESULTS_DIR, TEST_HR_DIR, TEST_LR_DIR
+
+# Configuration
+TEST_HR_DIR = Path("data/test/HR")
+RESULTS_DIR = Path("results")
+MODELS = {}
+# Auto-detect available result directories
+for name in ["swin2sr", "real_esrgan", "swin2sr_postprocessed", "real_esrgan_postprocessed"]:
+    path = RESULTS_DIR / name
+    if path.exists() and any(path.glob("*.png")):
+        MODELS[name] = path
+
 
 
 def compute_metrics(hr_dir, sr_dir):
