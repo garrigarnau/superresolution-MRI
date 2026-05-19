@@ -6,26 +6,51 @@ saves super-resolved outputs and timing data.
 
 import time
 import json
+import argparse
 import torch
 import numpy as np
 from PIL import Image
-from pathlib import Path
 
-# Configuration
-TEST_LR_DIR = Path("data/test/LR")
-RESULTS_DIR = Path("results")
-DEVICE = torch.device("mps" if torch.backends.mps.is_available() else
-                      "cuda" if torch.cuda.is_available() else "cpu")
+from config import (
+    REAL_ESRGAN_RESULTS_DIR,
+    REAL_ESRGAN_WEIGHTS_PATH,
+    RESULTS_DIR,
+    SWIN2SR_RESULTS_DIR,
+    TEST_LR_DIR,
+)
 
 
-def run_swin2sr(lr_dir, output_dir):
+def resolve_device(device_name):
+    """Resolve and validate the requested inference device."""
+    if device_name == "auto":
+        device_name = "mps" if torch.backends.mps.is_available() else (
+            "cuda" if torch.cuda.is_available() else "cpu"
+        )
+    elif device_name == "gpu":
+        device_name = "mps" if torch.backends.mps.is_available() else "cuda"
+
+    if device_name == "cuda" and not torch.cuda.is_available():
+        raise RuntimeError(
+            "CUDA was requested, but torch.cuda.is_available() is false. "
+            "Install a CUDA-enabled PyTorch build or use --device auto/cpu."
+        )
+    if device_name == "mps" and not torch.backends.mps.is_available():
+        raise RuntimeError(
+            "MPS was requested, but torch.backends.mps.is_available() is false. "
+            "Use --device auto/cpu on this machine."
+        )
+
+    return torch.device(device_name)
+
+
+def run_swin2sr(lr_dir, output_dir, device):
     """Run Swin2SR-classical-sr-x4-64 on all test images."""
     from transformers import AutoImageProcessor, Swin2SRForImageSuperResolution
 
-    print(f"Loading Swin2SR model on {DEVICE}...")
+    print(f"Loading Swin2SR model on {device}...")
     processor = AutoImageProcessor.from_pretrained("caidas/swin2SR-classical-sr-x4-64")
     model = Swin2SRForImageSuperResolution.from_pretrained("caidas/swin2SR-classical-sr-x4-64")
-    model = model.to(DEVICE)
+    model = model.to(device)
     model.eval()
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -38,7 +63,7 @@ def run_swin2sr(lr_dir, output_dir):
         img = Image.open(img_path).convert("RGB")
 
         # Preprocess
-        inputs = processor(img, return_tensors="pt").to(DEVICE)
+        inputs = processor(img, return_tensors="pt").to(device)
 
         # Inference with timing
         start = time.time()
@@ -70,13 +95,18 @@ def run_swin2sr(lr_dir, output_dir):
     return timings
 
 
-def run_real_esrgan(lr_dir, output_dir):
+def run_real_esrgan(lr_dir, output_dir, device):
     """Run Real-ESRGAN x4 on all test images."""
     from RealESRGAN import RealESRGAN
 
-    print(f"Loading Real-ESRGAN model on {DEVICE}...")
-    model = RealESRGAN(DEVICE, scale=4)
-    model.load_weights("weights/RealESRGAN_x4.pth", download=True)
+    print(f"Loading Real-ESRGAN model on {device}...")
+    model = RealESRGAN(device, scale=4)
+    model.load_weights(REAL_ESRGAN_WEIGHTS_PATH.as_posix(), download=True)
+    predict = model.predict
+    if device.type == "cuda" and hasattr(model.predict, "__wrapped__"):
+        # The ai-forever package decorates predict() with CUDA autocast.
+        # On some GPUs this returns NaNs for these grayscale MRI inputs.
+        predict = lambda img: model.predict.__wrapped__(model, img)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     timings = []
@@ -89,7 +119,7 @@ def run_real_esrgan(lr_dir, output_dir):
 
         # Inference with timing
         start = time.time()
-        sr_image = model.predict(img)
+        sr_image = predict(img)
         elapsed = time.time() - start
         timings.append(elapsed)
 
@@ -109,25 +139,33 @@ def run_real_esrgan(lr_dir, output_dir):
 
 
 def main():
-    print(f"Device: {DEVICE}")
+    parser = argparse.ArgumentParser(description="Run MRI super-resolution benchmarks.")
+    parser.add_argument(
+        "--device",
+        choices=["auto", "gpu", "cuda", "mps", "cpu"],
+        default="auto",
+        help="Inference device. 'gpu' picks MPS when available, otherwise CUDA.",
+    )
+    args = parser.parse_args()
+    device = resolve_device(args.device)
+
+    print(f"Device: {device}")
     print(f"Test images: {TEST_LR_DIR}")
     print()
 
     # Run Swin2SR
-    swin2sr_dir = RESULTS_DIR / "swin2sr"
-    swin2sr_timings = run_swin2sr(TEST_LR_DIR, swin2sr_dir)
+    swin2sr_timings = run_swin2sr(TEST_LR_DIR, SWIN2SR_RESULTS_DIR, device)
     print(f"\nSwin2SR done: {len(swin2sr_timings)} images, "
           f"avg {np.mean(swin2sr_timings):.4f}s/image\n")
 
     # Run Real-ESRGAN
-    esrgan_dir = RESULTS_DIR / "real_esrgan"
-    esrgan_timings = run_real_esrgan(TEST_LR_DIR, esrgan_dir)
+    esrgan_timings = run_real_esrgan(TEST_LR_DIR, REAL_ESRGAN_RESULTS_DIR, device)
     print(f"\nReal-ESRGAN done: {len(esrgan_timings)} images, "
           f"avg {np.mean(esrgan_timings):.4f}s/image\n")
 
     # Save timings
     timings_data = {
-        "device": str(DEVICE),
+        "device": str(device),
         "n_images": len(swin2sr_timings),
         "swin2sr": {
             "mean": float(np.mean(swin2sr_timings)),

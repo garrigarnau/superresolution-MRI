@@ -14,6 +14,7 @@ Projecte/
 │   ├── val/HR/ val/LR/     # 557 imatges
 │   └── test/HR/ test/LR/   # 559 imatges
 ├── scripts/
+│   ├── config.py           # Configuracio compartida de paths i constants
 │   ├── preprocess.py       # Conversio volums 3D -> slices 2D + HR/LR pairs
 │   ├── benchmark.py        # Inferencia amb Swin2SR i Real-ESRGAN
 │   └── evaluate.py         # Calcul PSNR, SSIM + comparativa visual
@@ -24,6 +25,7 @@ Projecte/
 │   ├── timings.json        # Temps d'inferencia
 │   └── visual_comparison.png
 ├── docs/
+│   ├── assets/styles.css    # Estils compartits de la documentacio HTML
 │   ├── preprocess.html     # Documentacio del preprocessament
 │   └── benchmark.html      # Documentacio del benchmarking
 ├── weights/                # Pesos dels models (descarregats automaticament)
@@ -42,8 +44,8 @@ Avaluacio de dos models pre-entrenats sobre el test set:
 
 | Model | PSNR (dB) | SSIM | Temps (s/img) |
 |-------|-----------|------|---------------|
-| Swin2SR | 15.40 | 0.6574 | 0.37 |
-| Real-ESRGAN | 23.66 | 0.8463 | 4.28 |
+| Swin2SR | 15.40 | 0.6574 | 0.1037 |
+| Real-ESRGAN | 23.66 | 0.8463 | 0.6192 |
 
 Cap dels dos models funciona be "de serie" per a imatges MRI.
 
