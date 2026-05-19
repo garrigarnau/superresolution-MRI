@@ -13,10 +13,12 @@ from skimage.metrics import structural_similarity as ssim
 # Configuration
 TEST_HR_DIR = Path("data/test/HR")
 RESULTS_DIR = Path("results")
-MODELS = {
-    "swin2sr": RESULTS_DIR / "swin2sr",
-    "real_esrgan": RESULTS_DIR / "real_esrgan",
-}
+MODELS = {}
+# Auto-detect available result directories
+for name in ["swin2sr", "real_esrgan", "swin2sr_postprocessed", "real_esrgan_postprocessed"]:
+    path = RESULTS_DIR / name
+    if path.exists() and any(path.glob("*.png")):
+        MODELS[name] = path
 
 
 def compute_metrics(hr_dir, sr_dir):
