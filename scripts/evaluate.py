@@ -4,6 +4,8 @@ Computes PSNR, SSIM metrics and generates visual comparisons.
 """
 
 import json
+from pathlib import Path
+
 import numpy as np
 from PIL import Image
 from skimage.metrics import peak_signal_noise_ratio as psnr
@@ -15,7 +17,13 @@ TEST_HR_DIR = Path("data/test/HR")
 RESULTS_DIR = Path("results")
 MODELS = {}
 # Auto-detect available result directories
-for name in ["swin2sr", "real_esrgan", "swin2sr_postprocessed", "real_esrgan_postprocessed"]:
+for name in [
+    "swin2sr_aligned",
+    "real_esrgan",
+    "swin2sr_finetuned",
+    "swin2sr_postprocessed",
+    "real_esrgan_postprocessed",
+]:
     path = RESULTS_DIR / name
     if path.exists() and any(path.glob("*.png")):
         MODELS[name] = path

@@ -7,7 +7,7 @@ import argparse
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from config import (
@@ -139,9 +139,9 @@ def main():
     criterion = CombinedLoss(l1_weight=L1_WEIGHT, perceptual_weight=PERCEPTUAL_WEIGHT).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="max", patience=SCHEDULER_PATIENCE, factor=0.5, verbose=True
+        optimizer, mode="max", patience=SCHEDULER_PATIENCE, factor=0.5
     )
-    scaler = GradScaler(enabled=USE_AMP)
+    scaler = GradScaler("cuda", enabled=USE_AMP)
 
     # ─── Checkpointing setup ─────────────────────────────────────────────────
     CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
@@ -166,7 +166,7 @@ def main():
 
             optimizer.zero_grad()
 
-            with autocast(enabled=USE_AMP):
+            with autocast("cuda", enabled=USE_AMP):
                 sr_batch = forward_pass(model, lr_batch)
 
                 # Handle potential size mismatch
@@ -199,7 +199,7 @@ def main():
             val_loss, val_psnr = validate(model, val_loader, criterion, device)
             scheduler.step(val_psnr)
 
-            print(f"Epoch {epoch}/{EPOCHS} ({epoch_time:.1f}s) — "
+            print(f"Epoch {epoch}/{EPOCHS} ({epoch_time:.1f}s) - "
                   f"Train Loss: {avg_train_loss:.5f} | "
                   f"Val Loss: {val_loss:.5f} | Val PSNR: {val_psnr:.2f} dB | "
                   f"LR: {optimizer.param_groups[0]['lr']:.2e}")
@@ -222,7 +222,7 @@ def main():
                     print(f"\nEarly stopping: no improvement for {EARLY_STOP_PATIENCE} epochs.")
                     break
         else:
-            print(f"Epoch {epoch}/{EPOCHS} ({epoch_time:.1f}s) — "
+            print(f"Epoch {epoch}/{EPOCHS} ({epoch_time:.1f}s) - "
                   f"Train Loss: {avg_train_loss:.5f}")
 
     # ─── Final save ───────────────────────────────────────────────────────────

@@ -16,20 +16,19 @@ SCALE_FACTOR = 4
 IN_CHANNELS = 1  # grayscale MRI
 
 # ─── Training hyperparameters ────────────────────────────────────────────────
-BATCH_SIZE = 8
+BATCH_SIZE = 2
 NUM_WORKERS = 4
-EPOCHS = 100
+EPOCHS = 30
 LEARNING_RATE = 2e-5
 WEIGHT_DECAY = 1e-4
-SCHEDULER_PATIENCE = 5
-EARLY_STOP_PATIENCE = 15
-
+SCHEDULER_PATIENCE = 3
+EARLY_STOP_PATIENCE = 8
 # ─── Loss weights ────────────────────────────────────────────────────────────
 L1_WEIGHT = 1.0
 PERCEPTUAL_WEIGHT = 0.1
 
 # ─── Mixed precision ─────────────────────────────────────────────────────────
-USE_AMP = True
+USE_AMP = False
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 LOG_INTERVAL = 50  # print every N batches

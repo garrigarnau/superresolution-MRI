@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+from contextlib import nullcontext
 from torchvision.models import vgg19, VGG19_Weights
 
 
@@ -20,24 +21,35 @@ class VGGPerceptualLoss(nn.Module):
             param.requires_grad = False
 
     def forward(self, sr, hr):
-        # Replicate 1-channel grayscale to 3 channels for VGG
-        if sr.shape[1] == 1:
-            sr = sr.repeat(1, 3, 1, 1)
-            hr = hr.repeat(1, 3, 1, 1)
-
-        sr_f1 = self.slice1(sr)
-        sr_f2 = self.slice2(sr_f1)
-        sr_f3 = self.slice3(sr_f2)
-
-        hr_f1 = self.slice1(hr)
-        hr_f2 = self.slice2(hr_f1)
-        hr_f3 = self.slice3(hr_f2)
-
-        loss = (
-            nn.functional.l1_loss(sr_f1, hr_f1)
-            + nn.functional.l1_loss(sr_f2, hr_f2)
-            + nn.functional.l1_loss(sr_f3, hr_f3)
+        # VGG19 feature loss is numerically fragile in fp16 on some GPUs.
+        # Keep this branch in float32 even when the training step uses AMP.
+        autocast_context = (
+            torch.amp.autocast(device_type=sr.device.type, enabled=False)
+            if sr.device.type == "cuda"
+            else nullcontext()
         )
+        with autocast_context:
+            sr = sr.float()
+            hr = hr.float()
+
+            # Replicate 1-channel grayscale to 3 channels for VGG
+            if sr.shape[1] == 1:
+                sr = sr.repeat(1, 3, 1, 1)
+                hr = hr.repeat(1, 3, 1, 1)
+
+            sr_f1 = self.slice1(sr)
+            sr_f2 = self.slice2(sr_f1)
+            sr_f3 = self.slice3(sr_f2)
+
+            hr_f1 = self.slice1(hr)
+            hr_f2 = self.slice2(hr_f1)
+            hr_f3 = self.slice3(hr_f2)
+
+            loss = (
+                nn.functional.l1_loss(sr_f1, hr_f1)
+                + nn.functional.l1_loss(sr_f2, hr_f2)
+                + nn.functional.l1_loss(sr_f3, hr_f3)
+            )
         return loss
 
 

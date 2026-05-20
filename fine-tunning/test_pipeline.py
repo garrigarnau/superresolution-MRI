@@ -17,7 +17,7 @@ import argparse
 import torch
 import numpy as np
 from torch.utils.data import DataLoader, Subset
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from skimage.metrics import peak_signal_noise_ratio as psnr
 
 from config import (
@@ -205,7 +205,7 @@ def test_gpu_training(train_ds, val_ds, device, n_steps=20):
 
     criterion = CombinedLoss(l1_weight=L1_WEIGHT, perceptual_weight=PERCEPTUAL_WEIGHT).to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    scaler = GradScaler(enabled=USE_AMP)
+    scaler = GradScaler("cuda", enabled=USE_AMP)
 
     # ─── Training steps ───────────────────────────────────────────────────────
     losses = []
@@ -225,7 +225,7 @@ def test_gpu_training(train_ds, val_ds, device, n_steps=20):
         start = time.time()
         optimizer.zero_grad()
 
-        with autocast(enabled=USE_AMP):
+        with autocast("cuda", enabled=USE_AMP):
             sr_batch = model(lr_batch).reconstruction
             if sr_batch.shape != hr_batch.shape:
                 sr_batch = torch.nn.functional.interpolate(
@@ -254,9 +254,9 @@ def test_gpu_training(train_ds, val_ds, device, n_steps=20):
     first_half = np.mean(losses[:n_steps // 2])
     second_half = np.mean(losses[n_steps // 2:])
     if second_half > first_half * 1.5:
-        print(f"       WARNING: Loss may be diverging ({first_half:.5f} → {second_half:.5f})")
+        print(f"       WARNING: Loss may be diverging ({first_half:.5f} -> {second_half:.5f})")
     else:
-        print(f"       Loss trend: {first_half:.5f} → {second_half:.5f} (stable)")
+        print(f"       Loss trend: {first_half:.5f} -> {second_half:.5f} (stable)")
 
     # ─── Validation pass ──────────────────────────────────────────────────────
     print(f"       Running validation ({len(val_ds)} images)...")
@@ -296,7 +296,7 @@ def test_gpu_training(train_ds, val_ds, device, n_steps=20):
 
     # ─── Memory summary ──────────────────────────────────────────────────────
     max_mem = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
-    total_mem = torch.cuda.get_device_properties(device).total_mem / (1024 ** 3)
+    total_mem = torch.cuda.get_device_properties(device).total_memory / (1024 ** 3)
     print(f"       Peak GPU memory: {max_mem:.2f} / {total_mem:.2f} GB")
     print(f"       Avg step time: {np.mean(step_times):.2f}s")
     est_epoch_time = np.mean(step_times) * len(train_loader)
