@@ -1,8 +1,6 @@
-"""
-Evaluation script for MRI Super-Resolution benchmark.
-Computes PSNR, SSIM metrics and generates visual comparisons.
-"""
+"""Evaluate MRI super-resolution outputs in a selected results folder."""
 
+import argparse
 import json
 from pathlib import Path
 
@@ -10,24 +8,17 @@ import numpy as np
 from PIL import Image
 from skimage.metrics import peak_signal_noise_ratio as psnr
 from skimage.metrics import structural_similarity as ssim
-from config import MODELS, RESULTS_DIR, TEST_HR_DIR, TEST_LR_DIR
+from config import RESULTS_DIR, TEST_HR_DIR, TEST_LR_DIR
 
-# Configuration
-TEST_HR_DIR = Path("data/test/HR")
-RESULTS_DIR = Path("results")
-MODELS = {}
-# Auto-detect available result directories
-for name in [
-    "swin2sr_aligned",
+
+KNOWN_RESULT_DIRS = [
+    "swin2sr",
     "real_esrgan",
     "swin2sr_finetuned",
+    "swin2sr_grayscale_base",
     "swin2sr_postprocessed",
     "real_esrgan_postprocessed",
-]:
-    path = RESULTS_DIR / name
-    if path.exists() and any(path.glob("*.png")):
-        MODELS[name] = path
-
+]
 
 
 def compute_metrics(hr_dir, sr_dir):
@@ -56,6 +47,9 @@ def compute_metrics(hr_dir, sr_dir):
 
         psnr_values.append(p)
         ssim_values.append(s)
+
+    if not psnr_values:
+        raise ValueError(f"No matching HR/SR image pairs found for {sr_dir}")
 
     return {
         "psnr_mean": float(np.mean(psnr_values)),
@@ -120,13 +114,41 @@ def generate_visual_comparison(hr_dir, lr_dir, models, output_path, n_samples=5)
     print(f"Visual comparison saved to {output_path}")
 
 
+def discover_models(results_dir):
+    models = {}
+    for name in KNOWN_RESULT_DIRS:
+        path = results_dir / name
+        if path.exists() and any(path.glob("*.png")):
+            models[name] = path
+    return models
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Evaluate MRI super-resolution results.")
+    parser.add_argument(
+        "--results-dir",
+        type=Path,
+        default=RESULTS_DIR,
+        help="Folder containing model output subfolders. Defaults to results/.",
+    )
+    return parser.parse_args()
+
+
 def main():
+    args = parse_args()
+    results_dir = args.results_dir
+    models = discover_models(results_dir)
+
     print("Evaluating super-resolution models...")
     print(f"HR ground truth: {TEST_HR_DIR}")
+    print(f"Results folder: {results_dir}")
     print()
 
+    if not models:
+        raise RuntimeError(f"No model output folders found in {results_dir}")
+
     # Load timings if available
-    timings_path = RESULTS_DIR / "timings.json"
+    timings_path = results_dir / "timings.json"
     timings = {}
     if timings_path.exists():
         with open(timings_path) as f:
@@ -134,7 +156,7 @@ def main():
 
     # Compute metrics for each model
     all_metrics = {}
-    for name, sr_dir in MODELS.items():
+    for name, sr_dir in models.items():
         if not sr_dir.exists():
             print(f"  Skipping {name}: no results found at {sr_dir}")
             continue
@@ -165,14 +187,14 @@ def main():
     print("=" * 70)
 
     # Save metrics
-    with open(RESULTS_DIR / "metrics.json", "w") as f:
+    with open(results_dir / "metrics.json", "w") as f:
         json.dump(all_metrics, f, indent=2)
-    print(f"\nMetrics saved to {RESULTS_DIR / 'metrics.json'}")
+    print(f"\nMetrics saved to {results_dir / 'metrics.json'}")
 
     # Generate visual comparison
     generate_visual_comparison(
-        TEST_HR_DIR, TEST_LR_DIR, MODELS,
-        RESULTS_DIR / "visual_comparison.png",
+        TEST_HR_DIR, TEST_LR_DIR, models,
+        results_dir / "visual_comparison.png",
         n_samples=5
     )
 

@@ -20,7 +20,7 @@ VAL_RATIO = 0.10
 TEST_RATIO = 0.10
 SEED = 42
 
-# Benchmark outputs
+# Benchmark outputs. Swin2SR is canonical and aligned to the LR footprint.
 SWIN2SR_RESULTS_DIR = RESULTS_DIR / "swin2sr"
 REAL_ESRGAN_RESULTS_DIR = RESULTS_DIR / "real_esrgan"
 REAL_ESRGAN_WEIGHTS_PATH = WEIGHTS_DIR / "RealESRGAN_x4.pth"

@@ -18,6 +18,7 @@ from config import (
     SWIN2SR_RESULTS_DIR,
     TEST_LR_DIR,
 )
+from swin2sr_alignment import align_to_lr_footprint
 
 
 def resolve_device(device_name):
@@ -44,7 +45,7 @@ def resolve_device(device_name):
 
 
 def run_swin2sr(lr_dir, output_dir, device):
-    """Run Swin2SR-classical-sr-x4-64 on all test images."""
+    """Run the canonical aligned Swin2SR baseline on all test images."""
     from transformers import AutoImageProcessor, Swin2SRForImageSuperResolution
 
     print(f"Loading Swin2SR model on {device}...")
@@ -60,7 +61,8 @@ def run_swin2sr(lr_dir, output_dir, device):
     print(f"Running Swin2SR on {len(lr_images)} images...")
     for i, img_path in enumerate(lr_images):
         # Load grayscale and convert to RGB (model expects 3 channels)
-        img = Image.open(img_path).convert("RGB")
+        lr_gray = Image.open(img_path).convert("L")
+        img = lr_gray.convert("RGB")
 
         # Preprocess
         inputs = processor(img, return_tensors="pt").to(device)
@@ -87,7 +89,8 @@ def run_swin2sr(lr_dir, output_dir, device):
         if sr_img.size != (256, 256):
             sr_img = sr_img.resize((256, 256), Image.BICUBIC)
 
-        sr_img.save(output_dir / img_path.name)
+        aligned_output = align_to_lr_footprint(np.array(sr_img), lr_gray)
+        Image.fromarray(aligned_output, mode="L").save(output_dir / img_path.name)
 
         if (i + 1) % 50 == 0:
             print(f"  [{i+1}/{len(lr_images)}] avg time: {np.mean(timings):.4f}s")
@@ -153,7 +156,7 @@ def main():
     print(f"Test images: {TEST_LR_DIR}")
     print()
 
-    # Run Swin2SR
+    # Run the canonical aligned Swin2SR baseline
     swin2sr_timings = run_swin2sr(TEST_LR_DIR, SWIN2SR_RESULTS_DIR, device)
     print(f"\nSwin2SR done: {len(swin2sr_timings)} images, "
           f"avg {np.mean(swin2sr_timings):.4f}s/image\n")

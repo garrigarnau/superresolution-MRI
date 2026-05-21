@@ -1,76 +1,114 @@
 # MRI Super-Resolution
 
-Projecte de super-resolucio d'imatges de ressonancia magnetica cerebral (dataset OASIS).
-L'objectiu es entrenar i avaluar models de super-resolucio per millorar la qualitat d'imatges MRI de baixa resolucio (64x64 -> 256x256, factor x4).
+Super-resolution project for OASIS brain MRI slices. The task is 4x
+single-image super-resolution from 64x64 LR images to 256x256 HR images.
 
-## Estructura del projecte
+## Current Organization
 
+There is one canonical Swin2SR baseline in this repository: `swin2sr`.
+It uses the aligned behavior. The old unaligned Swin2SR output is not kept as a
+separate final MVP method.
+
+The root `results/` folder is reserved for the no-fine-tuning MVP benchmark:
+
+```text
+results/
+├── real_esrgan/
+├── swin2sr/
+├── metrics.json
+├── timings.json
+└── visual_comparison.png
 ```
-Projecte/
-├── disc1/                  # Dataset OASIS original (39 subjectes)
-├── data/                   # Dades preprocessades
-│   ├── train/HR/           # 4461 imatges 256x256 (ground truth)
-│   ├── train/LR/           # 4461 imatges 64x64 (input)
-│   ├── val/HR/ val/LR/     # 557 imatges
-│   └── test/HR/ test/LR/   # 559 imatges
-├── scripts/
-│   ├── config.py           # Configuracio compartida de paths i constants
-│   ├── preprocess.py       # Conversio volums 3D -> slices 2D + HR/LR pairs
-│   ├── benchmark.py        # Inferencia amb Swin2SR i Real-ESRGAN
-│   └── evaluate.py         # Calcul PSNR, SSIM + comparativa visual
-├── results/
-│   ├── swin2sr/            # Sortides del model Swin2SR
-│   ├── real_esrgan/        # Sortides del model Real-ESRGAN
-│   ├── metrics.json        # Metriques quantitatives
-│   ├── timings.json        # Temps d'inferencia
-│   └── visual_comparison.png
+
+The fine-tuning comparison lives inside the fine-tuning folder:
+
+```text
+fine-tunning/results/
+├── real_esrgan/
+├── swin2sr/
+├── swin2sr_finetuned/
+├── metrics.json
+├── timings.json
+└── visual_comparison.png
+```
+
+`fine-tunning/` is the existing project folder name. It is kept to avoid
+breaking local paths.
+
+## Project Structure
+
+```text
+.
+├── data/                         # Preprocessed train/val/test PNG pairs
+├── disc1/                        # Original OASIS volumes
 ├── docs/
-│   ├── assets/styles.css    # Estils compartits de la documentacio HTML
-│   ├── preprocess.html     # Documentacio del preprocessament
-│   └── benchmark.html      # Documentacio del benchmarking
-├── weights/                # Pesos dels models (descarregats automaticament)
-├── requirements.txt
-└── venv/
+│   └── PIPELINE_PROFESSOR.md     # Pipeline and result organization notes
+├── fine-tunning/
+│   ├── checkpoints/              # Fine-tuned Swin2SR checkpoints, if present
+│   ├── infer_finetuned.py
+│   ├── train.py
+│   └── results/                  # Global/fine-tuning comparison results
+├── results/                      # No-fine-tuning MVP benchmark only
+├── scripts/
+│   ├── benchmark.py              # Pretrained Swin2SR + Real-ESRGAN inference
+│   ├── evaluate.py               # Metrics and visual comparisons
+│   ├── align_swin2sr.py          # Legacy repair script only
+│   └── swin2sr_alignment.py      # Canonical Swin2SR alignment helper
+└── weights/
 ```
 
-## Fases del projecte
+## Results
 
-### Fase 0: Preprocessament
-Conversio dels volums 3D Analyze (.hdr/.img) a parelles d'imatges 2D PNG (HR 256x256, LR 64x64).
-S'utilitzen els volums T88_masked_gfc (Talairach, skull-stripped, bias-corrected).
+No-fine-tuning MVP benchmark in `results/`:
 
-### Fase 1: Benchmarking (sense fine-tuning)
-Avaluacio de dos models pre-entrenats sobre el test set:
+| Method | PSNR (dB) | SSIM | Time (s/img) |
+|---|---:|---:|---:|
+| Swin2SR aligned pretrained | 22.41 +/- 9.01 | 0.7619 +/- 0.2278 | 0.1083 |
+| Real-ESRGAN pretrained | 23.66 +/- 4.48 | 0.8463 +/- 0.0793 | 0.6360 |
 
-| Model | PSNR (dB) | SSIM | Temps (s/img) |
-|-------|-----------|------|---------------|
-| Swin2SR | 15.40 | 0.6574 | 0.1037 |
-| Real-ESRGAN | 23.66 | 0.8463 | 0.6192 |
+Fine-tuning/global comparison in `fine-tunning/results/`:
 
-Cap dels dos models funciona be "de serie" per a imatges MRI.
+| Method | PSNR (dB) | SSIM | Time (s/img) |
+|---|---:|---:|---:|
+| Swin2SR aligned pretrained | 22.41 +/- 9.01 | 0.7619 +/- 0.2278 | 0.1083 |
+| Real-ESRGAN pretrained | 23.66 +/- 4.48 | 0.8463 +/- 0.0793 | 0.6360 |
+| Swin2SR fine-tuned | 37.04 +/- 2.69 | 0.9764 +/- 0.0131 | N/A |
 
-### Fase 2: Fine-Tuning (pendent)
+The fine-tuned timing is not reported because the existing fine-tuned inference
+outputs did not include a timing JSON entry.
 
-### Fase 3: Avaluacio final (pendent)
-
-## Execucio
+## Running
 
 ```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 
-# Preprocessament
+# Preprocess OASIS volumes into HR/LR PNG pairs.
 python scripts/preprocess.py
 
-# Benchmarking
-python scripts/benchmark.py
+# No-fine-tuning MVP benchmark.
+python scripts/benchmark.py --device auto
 python scripts/evaluate.py
+
+# Fine-tuned Swin2SR inference, if checkpoints exist.
+python fine-tunning/infer_finetuned.py --device auto
+
+# Global comparison including fine-tuning outputs.
+python scripts/evaluate.py --results-dir fine-tunning/results
 ```
 
-## Requisits
+On Windows PowerShell, activate the environment with:
 
-- Python 3.10+
-- PyTorch (amb MPS/CUDA)
-- nibabel, transformers, scikit-image, pillow, numpy
-- Real-ESRGAN (ai-forever/Real-ESRGAN)
+```powershell
+.\venv\Scripts\Activate.ps1
+```
+
+## Notes
+
+- `scripts/benchmark.py` writes aligned Swin2SR outputs directly to
+  `results/swin2sr/`.
+- `scripts/align_swin2sr.py` is kept only as a compatibility script for older
+  unaligned output folders.
+- Do not add `results/swin2sr_aligned/` as a final method. If alignment is
+  needed, it belongs in the canonical `swin2sr` path.

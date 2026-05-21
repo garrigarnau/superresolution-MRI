@@ -13,8 +13,9 @@ from model import load_swin2sr_grayscale
 
 
 TEST_LR_DIR = PROJECT_ROOT / "data" / "test" / "LR"
-DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "results" / "swin2sr_finetuned"
-BASE_OUTPUT_DIR = PROJECT_ROOT / "results" / "swin2sr_grayscale_base"
+FINE_TUNING_RESULTS_DIR = Path(__file__).resolve().parent / "results"
+DEFAULT_OUTPUT_DIR = FINE_TUNING_RESULTS_DIR / "swin2sr_finetuned"
+BASE_OUTPUT_DIR = FINE_TUNING_RESULTS_DIR / "swin2sr_grayscale_base"
 
 
 def resolve_device(device_name):
