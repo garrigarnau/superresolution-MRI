@@ -77,6 +77,11 @@ Fine-tuning/global comparison in `fine-tunning/results/`:
 The fine-tuned timing is not reported because the existing fine-tuned inference
 outputs did not include a timing JSON entry.
 
+3D MedicalNet experiment results are summarized in
+[`3dmodel/results/README.md`](3dmodel/results/README.md). The tracked files are
+limited to lightweight metrics and figures; generated volumes, patches,
+checkpoints, and original OASIS data are not committed.
+
 ## Running
 
 ```bash

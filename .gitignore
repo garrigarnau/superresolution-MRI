@@ -9,8 +9,17 @@ venv/
 # Dades generades (reproduir amb: python scripts/preprocess.py)
 data/
 
-# Resultats generats (reproduir amb: python scripts/benchmark.py + evaluate.py)
-results/
+# Resultats 2D generats a l'arrel (reproduir amb: python scripts/benchmark.py + evaluate.py)
+/results/
+
+# Resultats 3D pesats. Es poden reproduir amb el pipeline de 3dmodel/.
+3dmodel/patches/
+3dmodel/checkpoints/
+3dmodel/results/**/*.npy
+!3dmodel/results/metrics_3d.json
+!3dmodel/results/README.md
+!3dmodel/results/figures/
+!3dmodel/results/figures/*.png
 
 # Pesos dels models (es descarreguen automaticament)
 weights/
@@ -23,4 +32,3 @@ __pycache__/
 weights/
 
 fine-tunning/checkpoints/
-

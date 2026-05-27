@@ -59,7 +59,7 @@ class SRDecoder3D(nn.Module):
         stage4 (2048, 1,1,1)  → up → (512, 2,2,2)  + stage3 skip (1024)
         → up → (256, 4,4,4)   + stage2 skip (512)
         → up → (128, 8,8,8)   + stage1 skip (256)
-        → up → (64, 16,16,16) + embedding skip (64)
+        → up → (64, 16,16,16)
         → up → (32, 32,32,32)
         → up → (16, 64,64,64) — final x2 upscale
         → conv → (1, 64,64,64)
@@ -71,7 +71,7 @@ class SRDecoder3D(nn.Module):
         self.up4 = DecoderBlock(2048, 1024, 512)   # 1→2, concat stage3
         self.up3 = DecoderBlock(512, 512, 256)     # 2→4, concat stage2
         self.up2 = DecoderBlock(256, 256, 128)     # 4→8, concat stage1
-        self.up1 = DecoderBlock(128, 64, 64)       # 8→16, concat embedding
+        self.up1 = DecoderBlock(128, 0, 64)        # 8→16 (no compatible skip)
         self.up0 = DecoderBlock(64, 0, 32)         # 16→32 (no skip)
         self.up_final = DecoderBlock(32, 0, 16)    # 32→64 (x2 upscale to HR)
 
@@ -93,7 +93,7 @@ class SRDecoder3D(nn.Module):
         x = self.up4(s4, s3)       # (512, 2, 2, 2)
         x = self.up3(x, s2)        # (256, 4, 4, 4)
         x = self.up2(x, s1)        # (128, 8, 8, 8)
-        x = self.up1(x, emb)       # (64, 16, 16, 16)
+        x = self.up1(x, None)      # (64, 16, 16, 16)
         x = self.up0(x, None)      # (32, 32, 32, 32)
         x = self.up_final(x, None) # (16, 64, 64, 64)
 
