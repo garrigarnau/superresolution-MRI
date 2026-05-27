@@ -172,6 +172,7 @@ def main():
             epochs_without_improvement = 0
             torch.save({
                 "epoch": epoch,
+                "model_state_dict": model.state_dict(),
                 "decoder_state_dict": model.decoder.state_dict(),
                 "optimizer_state_dict": optimizer.state_dict(),
                 "best_psnr": best_psnr,
@@ -186,6 +187,7 @@ def main():
     # ─── Final save ───────────────────────────────────────────────────────────
     torch.save({
         "epoch": epoch,
+        "model_state_dict": model.state_dict(),
         "decoder_state_dict": model.decoder.state_dict(),
         "optimizer_state_dict": optimizer.state_dict(),
         "best_psnr": best_psnr,

@@ -10,13 +10,12 @@ Evaluation was run on 7 OASIS test subjects using 3D PSNR and 3D SSIM.
 
 | Method | PSNR (dB) | SSIM |
 |---|---:|---:|
-| MedicalNet SR 3D | 14.55 +/- 0.17 | 0.0567 +/- 0.0089 |
+| MedicalNet SR 3D | 33.08 +/- 1.00 | 0.9164 +/- 0.0181 |
 | Trilinear baseline | 33.10 +/- 0.76 | 0.9411 +/- 0.0044 |
 
-The trilinear baseline performs substantially better than the current trained
-3D model. These results should be interpreted as an experimental run and as a
-useful failure case for improving the architecture, loss, normalization, or
-training strategy.
+The residual 3D model now reconstructs anatomy at approximately trilinear
+quality. It slightly underperforms trilinear on mean PSNR (-0.02 dB) and SSIM
+(-0.0247), so it is a functional baseline rather than a clear improvement.
 
 ## Files
 

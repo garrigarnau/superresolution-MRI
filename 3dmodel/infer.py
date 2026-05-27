@@ -116,7 +116,10 @@ def main():
 
     # Load trained decoder weights
     checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=False)
-    model.decoder.load_state_dict(checkpoint["decoder_state_dict"])
+    if "model_state_dict" in checkpoint:
+        model.load_state_dict(checkpoint["model_state_dict"])
+    else:
+        model.decoder.load_state_dict(checkpoint["decoder_state_dict"])
     print(f"Loaded checkpoint (epoch {checkpoint['epoch']}, PSNR: {checkpoint['best_psnr']:.2f} dB)")
 
     model.eval()

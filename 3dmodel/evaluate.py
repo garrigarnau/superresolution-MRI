@@ -109,8 +109,8 @@ def main():
         psnr_improvement = results["model_sr"]["psnr_mean"] - results["trilinear"]["psnr_mean"]
         ssim_improvement = results["model_sr"]["ssim_mean"] - results["trilinear"]["ssim_mean"]
         print(f"\n  Model improvement over trilinear:")
-        print(f"    PSNR: +{psnr_improvement:.2f} dB")
-        print(f"    SSIM: +{ssim_improvement:.4f}")
+        print(f"    PSNR: {psnr_improvement:+.2f} dB")
+        print(f"    SSIM: {ssim_improvement:+.4f}")
 
     # Save results
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)

@@ -18,6 +18,7 @@ For input LR patch (1, 1, 32, 32, 32):
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from transformers import AutoModel
 
 
@@ -101,7 +102,7 @@ class SRDecoder3D(nn.Module):
 
 
 class MedicalNetSR3D(nn.Module):
-    """Full 3D SR model: frozen MedicalNet encoder + trainable decoder."""
+    """Full 3D SR model: frozen MedicalNet encoder + residual decoder."""
 
     def __init__(self, encoder_name="nwirandx/medicalnet-resnet3d50"):
         super().__init__()
@@ -115,6 +116,8 @@ class MedicalNetSR3D(nn.Module):
 
         # Trainable decoder
         self.decoder = SRDecoder3D()
+        nn.init.zeros_(self.decoder.final_conv.weight)
+        nn.init.zeros_(self.decoder.final_conv.bias)
 
     def forward(self, lr_input):
         """
@@ -124,6 +127,13 @@ class MedicalNetSR3D(nn.Module):
         Returns:
             sr_output: (B, 1, 64, 64, 64) SR volume patch
         """
+        baseline = F.interpolate(
+            lr_input,
+            scale_factor=2,
+            mode="trilinear",
+            align_corners=False,
+        )
+
         # Extract multi-scale features from frozen encoder
         with torch.no_grad():
             encoder_out = self.encoder(
@@ -134,7 +144,9 @@ class MedicalNetSR3D(nn.Module):
 
         hidden_states = encoder_out.hidden_states  # tuple of 5 feature maps
 
-        # Decode to HR
-        sr_output = self.decoder(hidden_states)
+        # Decode a bounded residual over the trilinear baseline. This keeps
+        # untrained or weak checkpoints anatomically aligned with the LR input.
+        residual = 0.1 * torch.tanh(self.decoder(hidden_states))
+        sr_output = baseline + residual
 
         return sr_output

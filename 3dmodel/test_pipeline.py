@@ -161,7 +161,7 @@ def test_gpu_stress(device, n_steps=10):
         print(f"       Step {step}/{n_steps} | Loss: {loss.item():.6f} | "
               f"Time: {elapsed:.2f}s | GPU: {mem:.2f} GB")
 
-    total_mem = torch.cuda.get_device_properties(device).total_mem / (1024 ** 3)
+    total_mem = torch.cuda.get_device_properties(device).total_memory / (1024 ** 3)
     max_mem = torch.cuda.max_memory_allocated(device) / (1024 ** 3)
     print(f"\n       Peak GPU: {max_mem:.2f} / {total_mem:.2f} GB")
     print(f"       Avg step time: {np.mean(step_times):.2f}s")
