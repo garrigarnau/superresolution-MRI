@@ -9,8 +9,19 @@ venv/
 # Dades generades (reproduir amb: python scripts/preprocess.py)
 data/
 
-# Resultats 2D generats a l'arrel (reproduir amb: python scripts/benchmark.py + evaluate.py)
-/results/
+# Resultats 2D generats a l'arrel (reproduir amb: python scripts/benchmark.py + evaluate.py).
+# Es guarden nomes els resums generals i exemples visuals, no totes les imatges SR.
+/results/*
+!/results/metrics.json
+!/results/timings.json
+!/results/visual_comparison.png
+
+# Resultats del fine-tuning/global comparison.
+# Es guarden nomes els resums generals i exemples visuals.
+fine-tunning/results/*
+!fine-tunning/results/metrics.json
+!fine-tunning/results/timings.json
+!fine-tunning/results/visual_comparison.png
 
 # Resultats 3D pesats. Es poden reproduir amb el pipeline de 3dmodel/.
 3dmodel/patches/
@@ -28,7 +39,5 @@ weights/
 .DS_Store
 __pycache__/
 *.pyc
-
-weights/
 
 fine-tunning/checkpoints/

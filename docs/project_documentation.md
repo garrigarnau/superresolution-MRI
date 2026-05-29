@@ -169,7 +169,28 @@ python infer_finetuned.py [--checkpoint PATH] [--output-dir DIR] [--base] [--dev
 - Processes LR test images: load grayscale → normalize → forward pass → clip to [0, 255] → save PNG.
 - Outputs saved to `results/swin2sr_finetuned/`.
 
-### 3.9 Testing & Validation
+### 3.9 Evaluation Results
+
+The fine-tuned Swin2SR checkpoint was evaluated on the same 559-image x4 2D test set used for the global comparison in `fine-tunning/results/`.
+
+| Method | PSNR (dB) | SSIM | Images | Time/Image |
+|--------|-----------|------|--------|------------|
+| Swin2SR aligned pretrained | 22.41 +/- 9.01 | 0.7619 +/- 0.2278 | 559 | 0.1083s |
+| Real-ESRGAN pretrained | 23.66 +/- 4.48 | 0.8463 +/- 0.0793 | 559 | 0.6360s |
+| **Swin2SR fine-tuned** | **37.04 +/- 2.69** | **0.9764 +/- 0.0131** | 559 | N/A |
+
+**Interpretation**:
+- Fine-tuning improves Swin2SR by **+14.62 dB PSNR** and **+0.2145 SSIM** over the aligned pretrained Swin2SR baseline.
+- It also outperforms the Real-ESRGAN pretrained baseline by **+13.37 dB PSNR** and **+0.1301 SSIM** on the same x4 MRI task.
+- The lower standard deviation after fine-tuning suggests more consistent slice-level reconstruction across the test set.
+- Fine-tuned timing is not reported because the current `infer_finetuned.py` outputs do not write timing data into `fine-tunning/results/timings.json`.
+
+Artifacts:
+- Metrics: `fine-tunning/results/metrics.json`
+- Visual comparison grid: `fine-tunning/results/visual_comparison.png`
+- Fine-tuned outputs: `fine-tunning/results/swin2sr_finetuned/`
+
+### 3.10 Testing & Validation
 
 The `test_pipeline.py` provides comprehensive pre-training validation (7 stages):
 
@@ -188,7 +209,7 @@ python test_pipeline.py           # Basic CPU/MPS test
 python test_pipeline.py --gpu     # Full GPU validation
 ```
 
-### 3.10 Design Decisions Summary
+### 3.11 Design Decisions Summary
 
 | Decision | Rationale |
 |----------|-----------|
@@ -199,7 +220,7 @@ python test_pipeline.py --gpu     # Full GPU validation
 | No data augmentation | MRI standardized in Talairach space; augmentation creates unrealistic anatomy |
 | Early stopping (8 epochs) | Prevent overfitting on limited medical data |
 
-### 3.11 File Structure
+### 3.12 File Structure
 
 ```
 fine-tunning/
@@ -466,7 +487,7 @@ python evaluate.py
 |----------|-------|-----------|------|-------|
 | Swin2SR zero-shot (2D) | x4 | 15.40 | 0.657 | RGB model on grayscale — domain gap |
 | Real-ESRGAN zero-shot (2D) | x4 | 23.66 | 0.846 | Better zero-shot, but slow (4s/img) |
-| Swin2SR fine-tuned (2D) | x4 | — | — | Training infrastructure ready |
+| Swin2SR fine-tuned (2D) | x4 | 37.04 | 0.976 | Best 2D result after MRI domain adaptation |
 | MedicalNet SR 3D | x2 | 33.08 | 0.916 | Matches trilinear baseline |
 | Trilinear baseline (3D) | x2 | 33.10 | 0.941 | Simple interpolation reference |
 
@@ -474,13 +495,15 @@ python evaluate.py
 
 ### Key Takeaways
 
-1. **Domain adaptation is critical**: Zero-shot Swin2SR on MRI fails (15.4 dB) due to the RGB/grayscale gap. Fine-tuning and channel adaptation are necessary.
+1. **Domain adaptation is critical**: Zero-shot Swin2SR on MRI fails in its original setup due to the RGB/grayscale gap. After alignment and MRI fine-tuning, Swin2SR reaches 37.04 dB PSNR and 0.976 SSIM on the 559-image x4 test set.
 
-2. **3D coherence has value**: While PSNR numbers are similar to trilinear, the 3D model preserves volumetric structure that independent 2D processing cannot guarantee.
+2. **Fine-tuning is the strongest 2D intervention**: The fine-tuned Swin2SR improves over the aligned pretrained Swin2SR baseline by +14.62 dB PSNR and +0.2145 SSIM, and over Real-ESRGAN by +13.37 dB PSNR and +0.1301 SSIM on the same x4 MRI task.
 
-3. **Data limitation**: With only 39 subjects (~800 3D patches), the frozen-encoder approach is correct but limits the model's ability to significantly outperform baselines.
+3. **3D coherence has value**: While PSNR numbers are similar to trilinear, the 3D model preserves volumetric structure that independent 2D processing cannot guarantee.
 
-4. **Residual learning works**: The 3D model's residual strategy (baseline + small correction) ensures stable training and meaningful outputs even with limited data.
+4. **Data limitation**: With only 39 subjects (~800 3D patches), the frozen-encoder approach is correct but limits the model's ability to significantly outperform baselines.
+
+5. **Residual learning works**: The 3D model's residual strategy (baseline + small correction) ensures stable training and meaningful outputs even with limited data.
 
 ---
 
@@ -488,7 +511,7 @@ python evaluate.py
 
 ### What Was Achieved
 
-- Successfully adapted a pre-trained 2D SR model (Swin2SR) to grayscale MRI domain.
+- Successfully adapted and evaluated a pre-trained 2D SR model (Swin2SR) on the grayscale MRI domain, reaching 37.04 +/- 2.69 dB PSNR and 0.9764 +/- 0.0131 SSIM.
 - Built a complete 3D volumetric SR pipeline using MedicalNet as a frozen encoder.
 - Established reproducible evaluation with proper subject-level splits.
 - Created comprehensive testing suites for both pipelines.
@@ -496,6 +519,7 @@ python evaluate.py
 ### Current Limitations
 
 - **Limited training data**: 39 subjects is small for deep learning. The 3D model can't clearly outperform trilinear with ~800 patches.
+- **2D slice independence**: The fine-tuned 2D model performs strongly per slice, but it still does not explicitly enforce inter-slice anatomical consistency.
 - **3D scale factor**: Only x2 due to memory constraints. Clinical applications may need x4.
 - **No perceptual loss in 3D**: No pre-trained 3D perceptual network exists for the medical domain.
 
