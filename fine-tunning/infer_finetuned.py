@@ -1,6 +1,7 @@
-"""Run Swin2SR grayscale inference, optionally with a fine-tuned checkpoint."""
+"""Run fine-tuned Swin2SR inference on MRI test images."""
 
 import argparse
+import json
 import time
 from pathlib import Path
 
@@ -15,7 +16,6 @@ from model import load_swin2sr_grayscale
 TEST_LR_DIR = PROJECT_ROOT / "data" / "test" / "LR"
 FINE_TUNING_RESULTS_DIR = Path(__file__).resolve().parent / "results"
 DEFAULT_OUTPUT_DIR = FINE_TUNING_RESULTS_DIR / "swin2sr_finetuned"
-BASE_OUTPUT_DIR = FINE_TUNING_RESULTS_DIR / "swin2sr_grayscale_base"
 
 
 def resolve_device(device_name):
@@ -26,12 +26,10 @@ def resolve_device(device_name):
     return torch.device(device_name)
 
 
-def load_inference_model(checkpoint_path, device, use_base):
+def load_inference_model(checkpoint_path, device):
     model = load_swin2sr_grayscale(MODEL_NAME)
-    checkpoint = None
-    if not use_base:
-        checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
-        model.load_state_dict(checkpoint["model_state_dict"])
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
     model.eval()
     return model, checkpoint
@@ -53,6 +51,30 @@ def save_sr_image(tensor, path):
     output.save(path)
 
 
+def save_timings(timings, device):
+    timings_path = FINE_TUNING_RESULTS_DIR / "timings.json"
+    timings_path.parent.mkdir(parents=True, exist_ok=True)
+    if timings_path.exists():
+        with open(timings_path) as f:
+            timings_data = json.load(f)
+    else:
+        timings_data = {}
+
+    timings_data["device"] = str(device)
+    timings_data["n_images"] = len(timings)
+    timings_data["swin2sr_finetuned"] = {
+        "mean": float(np.mean(timings)),
+        "std": float(np.std(timings)),
+        "total": float(np.sum(timings)),
+        "per_image": [float(t) for t in timings],
+    }
+
+    with open(timings_path, "w") as f:
+        json.dump(timings_data, f, indent=2)
+
+    print(f"Timings saved to {timings_path}")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Run fine-tuned Swin2SR on test images.")
     parser.add_argument(
@@ -68,11 +90,6 @@ def main():
         help="Directory where generated SR images will be saved.",
     )
     parser.add_argument(
-        "--base",
-        action="store_true",
-        help="Run the grayscale-adapted base Swin2SR model without a fine-tuned checkpoint.",
-    )
-    parser.add_argument(
         "--device",
         choices=["auto", "cuda", "cpu"],
         default="auto",
@@ -86,26 +103,23 @@ def main():
     )
     args = parser.parse_args()
 
-    if not args.base and not args.checkpoint.exists():
+    if not args.checkpoint.exists():
         raise FileNotFoundError(
             f"Checkpoint not found: {args.checkpoint}. Run train.py first."
         )
 
     device = resolve_device(args.device)
     if args.output_dir is None:
-        args.output_dir = BASE_OUTPUT_DIR if args.base else DEFAULT_OUTPUT_DIR
+        args.output_dir = DEFAULT_OUTPUT_DIR
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"Device: {device}")
-    if args.base:
-        print("Checkpoint: none (grayscale-adapted base model)")
-    else:
-        print(f"Checkpoint: {args.checkpoint}")
+    print(f"Checkpoint: {args.checkpoint}")
     print(f"Test LR images: {TEST_LR_DIR}")
     print(f"Output: {args.output_dir}")
     print()
 
-    model, checkpoint = load_inference_model(args.checkpoint, device, args.base)
+    model, checkpoint = load_inference_model(args.checkpoint, device)
     if checkpoint and "epoch" in checkpoint:
         print(f"Loaded checkpoint from epoch {checkpoint['epoch']}")
     if checkpoint and "best_psnr" in checkpoint:
@@ -133,6 +147,7 @@ def main():
 
     print()
     print(f"Saved {len(image_paths)} images to {args.output_dir}")
+    save_timings(timings, device)
 
 
 if __name__ == "__main__":

@@ -15,7 +15,6 @@ KNOWN_RESULT_DIRS = [
     "swin2sr",
     "real_esrgan",
     "swin2sr_finetuned",
-    "swin2sr_grayscale_base",
     "swin2sr_postprocessed",
     "real_esrgan_postprocessed",
 ]
