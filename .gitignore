@@ -1,43 +1,9 @@
-# Dataset original (descarregar manualment)
-disc1/
-oasis_cross-sectional_disc1.tar.gz
 
 # Entorn virtual
 venv/
 .venv/
 
-# Dades generades (reproduir amb: python scripts/preprocess.py)
-data/
-
-# Resultats 2D generats a l'arrel (reproduir amb: python scripts/benchmark.py + evaluate.py).
-# Es guarden nomes els resums generals i exemples visuals, no totes les imatges SR.
-/results/*
-!/results/metrics.json
-!/results/timings.json
-!/results/visual_comparison.png
-
-# Resultats del fine-tuning/global comparison.
-# Es guarden nomes els resums generals i exemples visuals.
-fine-tunning/results/*
-!fine-tunning/results/metrics.json
-!fine-tunning/results/timings.json
-!fine-tunning/results/visual_comparison.png
-
-# Resultats 3D pesats. Es poden reproduir amb el pipeline de 3dmodel/.
-3dmodel/patches/
-3dmodel/checkpoints/
-3dmodel/results/**/*.npy
-!3dmodel/results/metrics_3d.json
-!3dmodel/results/README.md
-!3dmodel/results/figures/
-!3dmodel/results/figures/*.png
-
-# Pesos dels models (es descarreguen automaticament)
-weights/
-
 # Sistema
 .DS_Store
 __pycache__/
 *.pyc
-
-fine-tunning/checkpoints/
